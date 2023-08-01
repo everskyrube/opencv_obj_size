@@ -41,68 +41,102 @@ def calDist(p, q):
 
 def cal_vertical_LineSegment(image):
     (img_height, img_width) = image.shape
-    img_intersection = image.copy()
     mark_start_point = mark_end_point = [0, 0]
     max_distance = 0
     x = 0
     while (x < img_width):
         flag_start_counter = False
         y = 0
-        while (y < img_height):
-            next_y = y + 1
-            if (flag_start_counter == False and image[y,x] == 0 and image[next_y, x] == 1):
+        while (y < img_height -1):
+            if (flag_start_counter == False and image[y,x] == 0 and image[y+1, x] == 1):
                 flag_start_counter = True
                 start_point = [x, y]
-                while (next_y < img_height):
-                    if image[next_y,x] == 0:
-                        end_point = [x, next_y]
-                        y = next_y
+                explorer = y + 1
+                while (explorer < img_height - 1):
+                    if (image[explorer,x] == 0 and image[explorer+1, x] == 1):
+                        end_point = [x, explorer]
                         distance = calDist(start_point, end_point)
                         if (distance > max_distance):
                             max_distance = distance
                             mark_start_point = start_point
                             mark_end_point = end_point
                         flag_start_counter = False
+                        y = explorer+1
                         break
-                    next_y = next_y + 1
+                    explorer = explorer + 1
             y = y + 1
-        x = x + 1   
-    img_intersection = cv2.line(img_intersection, mark_start_point, mark_end_point, 0, 2)
-    print("Max vertical thickness: ", max_distance) 
-    showImg("Line Segments", img_intersection)
+        x = x + 1 
+    return mark_start_point, mark_end_point, max_distance 
     
 def cal_horizontal_LineSegment(image):
     (img_height, img_width) = image.shape
-    img_intersection = image.copy()
+    #img_intersection = image.copy() 
     mark_start_point = mark_end_point = [0, 0]
     max_distance = 0
     y = 0
     while (y < img_height):
         flag_start_counter = False
         x = 0
-        while (x < img_width):
-            next_x = x + 1
-            if (flag_start_counter == False and image[y,x] == 0 and image[y, next_x] == 1):
+        while (x < (img_width-1)):
+            #next_x = x + 1 # the (edge point + 1) is out of bounds for the image []; and image[y, next_x] == 1
+            if (flag_start_counter == False and image[y,x] == 0 and image[y, x + 1] == 1): 
                 flag_start_counter = True
                 start_point = [x, y]
-                while (next_x < img_width):
-                    if image[y,next_x] == 0:
-                        end_point = [next_x, y]
-                        x = next_x
+                if flag_start_counter: 
+                    explorer = x + 1
+                    while (explorer < img_width - 1):
+                        if (image[y,explorer] == 0 and image[y, explorer + 1]== 1): #This may cause edge problem
+                            end_point = [explorer, y]
+                            distance = calDist(start_point, end_point)
+                            if (distance > max_distance):
+                                max_distance = distance
+                                mark_start_point = start_point
+                                mark_end_point = end_point
+                            flag_start_counter = False
+                            x = explorer + 1 
+                            break
+                        explorer = explorer + 1      
+            x = x + 1
+        y = y + 1  
+
+    return mark_start_point, mark_end_point, max_distance
+    
+def cal_one_LineSegment(image):
+    (img_height, img_width) = image.shape
+    img_intersection = image.copy()
+    mark_start_point = mark_end_point = [0, 0]
+    max_distance = 0
+    y = 136
+    flag_start_counter = False
+    x = 0
+    while (x < (img_width-1)):
+        #next_x = x + 1 # the (edge point + 1) is out of bounds for the image []; and image[y, next_x] == 1
+        if (flag_start_counter == False and image[y,x] == 0 and image[y, x+1] ==1): 
+            flag_start_counter = True
+            start_point = [x, y]
+            print("start Point: ", start_point)
+            if flag_start_counter: #if the startpoint is found, explore the endpoint
+                explorer = x + 1
+                while (explorer < img_width):
+                    if (image[y,explorer] == 0 and image[y, explorer+1] ==1):
+                        end_point = [explorer, y]
+                        print("End Point: ", end_point)
                         distance = calDist(start_point, end_point)
                         if (distance > max_distance):
                             max_distance = distance
                             mark_start_point = start_point
                             mark_end_point = end_point
                         flag_start_counter = False
+                        x = explorer + 1 #if endpoint is found, start a new searching process
                         break
-                    next_x = next_x + 1
-            x = x + 1
-        y = y + 1   
-    img_intersection = cv2.line(img_intersection, mark_start_point, mark_end_point, 0, 2)
-    print("Max horizontal thickness: ", max_distance) 
+                    explorer = explorer + 1      
+        x = x + 1
+        
+    img_intersection = cv2.line(image, mark_start_point, mark_end_point, 0, 1)
+    #print("Max horizontal thickness: ", max_distance)
+    cv2.imwrite("horizontal_result.jpg", 255*img_intersection) 
     showImg("Line Segments", img_intersection)
-
+    
 def findIntersection(image):
     (img_height, img_width) = image.shape
     total_intersection = 0 
@@ -127,7 +161,7 @@ def findIntersection(image):
     else:
         print("Total insection points are even")
 
-def findContours(image):
+def findContours(image, cal_operation="horizontal"):
     #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = image
     # gray = cv2.GaussianBlur(gray, (7,7), 0) #removes high-frequence components 
@@ -143,29 +177,64 @@ def findContours(image):
     #sort the contours from left-to-right (allowing to extract the reference object)
     #(cnts, _) = contours.sort_contours(cnts) #the contours parameter name may be conflict with the opencv package name
     cnts = sorted(cnts, key=cv2.contourArea)
-    cntAreaThres = 300
+    cntAreaThres = 10 # set the threshold of contour area to filter small contour
     #showImg("edged", edged)
-    #loop over the contours individually
     
-    for c in cnts.copy():
+    max_distance = 0
+    for c in cnts.copy(): #loop over the contours individually
+        mask = np.ones(gray.shape)
         if cv2.contourArea(c) < cntAreaThres: #if the contour area is insufficiently large, ignore it
             cnts.remove(c)
-            #continue
-    mask = np.ones(gray.shape)
-    cntImg = cv2.drawContours(mask, cnts, -1 , 0, 1) # -1 to draw all, color and thickness
-    #cal_vertical_LineSegment(cntImg)
-    cal_horizontal_LineSegment(cntImg)
+            continue
+        mask = cv2.drawContours(mask, c, -1, 0, 1) ##NOT keep drawing here!
+        if (cal_operation == "horizontal"):
+            start_point, end_point, distance = cal_horizontal_LineSegment(mask)
+            if(distance > max_distance):
+                max_distance = distance
+                mark_start_point = start_point
+                mark_end_point = end_point
+
+        elif (cal_operation == "vertical"):
+            start_point, end_point, distance = cal_vertical_LineSegment(mask)
+            if(distance > max_distance):
+                max_distance = distance
+                mark_start_point = start_point
+                mark_end_point = end_point
+
+    image_name = "horizontal_result.jpg" if (cal_operation == "horizontal") else "vertical_result.jpg"
+    base_img = cv2.drawContours(mask, cnts, -1 , 0, 1) # -1 to draw all, color and thickness
+    img_intersection = cv2.line(base_img, mark_start_point, mark_end_point, 0, 1)
+    print("Max ", cal_operation, " thickness: ", max_distance)
+    cv2.imwrite(image_name, 255 * img_intersection) 
+    showImg(image_name, img_intersection)
+    #shortcut Ctrl+k+c comment; Ctrl+k+u uncomment
+    #showImg("contour", cntImg)
+    #For each contour img to calculate one metric
+    #showPixelValue(cntImg, type="grayscale_image")
+
     #findIntersection(cntImg)
     #point_img = lineIntersection(cntImg, "vertical", 400)
     #drawLines(cntImg)
     #showImg("Point Img", point_img)
-    #print(len(cnts))
 
-def showPixelValue(image):
-    for i in range (image.shape[0]): #traverses through height of the image
-        for j in range (image.shape[1]): #traverses through width of the image
-            if (image[i][j] != 0 and image[i][j] != 255):
-                print(image[i][j]) #(x, y), x is column wise, and y is row wise
+def showPixelValue(image, type = "grayscale_image"):
+    if (type =="grayscale_image"):
+        for i in range(image.shape[0]):
+            for j in range(image.shape[1]):
+                if(image[i][j]!=1): #0 black; 1 white
+                    print(image[i][j])
+    else:
+        if(image.shape[2] == 1): #grayscale image 
+            for i in range(image.shape[0]): #traverses through height of the image
+                for j in range(image.shape[1]): #traverses through width of the image
+                    #if (image[i][j]!= 0 and image[i][j]!= 255):
+                        print(image[i][j])
+
+        if(image.shape[2] == 3): ## Three channels
+            for i in range (image.shape[0]): 
+                for j in range (image.shape[1]): 
+                    if not (image[i][j][0]==255 and image[i][j][1]==255 and image[i][j][2] == 255):
+                        print(image[i][j])
     #print(type(image))
 
 def transformImage(image):
@@ -183,13 +252,19 @@ def transformImage(image):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", required=False, default="images/sheep_anno.png", help="path to the input image")
+    ap.add_argument("-o", "--operation", required=False, default="horizontal", help="cal horizontal or vertical line segment")
     args = vars(ap.parse_args())
-    #image = cv2.imread(args["image"]) 
+    image = cv2.imread(args["image"], cv2.IMREAD_GRAYSCALE) #if the image is grayscale, we only need one channel
+    cal_operation = args["operation"]
+    findContours(image, cal_operation)
+    #gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+    #print(image.shape)
+    #showPixelValue(image, type="grayscale_image")
     #findContours(image)
+    '''
     image = cv2.imread(args["image"], cv2.IMREAD_GRAYSCALE)
-    interpo_image = transformImage(image)
-    findContours(interpo_image)
-    #showPixelValue(image)
+    #interpo_image = transformImage(image)
+    '''
 
 if __name__ == "__main__":
       main()
