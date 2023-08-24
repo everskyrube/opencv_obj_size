@@ -6,12 +6,18 @@ import argparse
 import cv2
 import numpy as np
 import math
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
+def on_destroy(window):
+    cv2.destroyAllWindows()
 
 def showImg(displayName, image):
     cv2.imshow(displayName, image)
     cv2.waitKey(0)
-    cv2.destroyWindow(displayName)
+    window = Gtk.Window() # Be properly registering the window and connecting the destroy event.
+    window.connect("destroy", on_destroy)
 
 def drawPoint(image, centerOfCircle): #Draw black point on the grayscale image only
     (x, y) = centerOfCircle
@@ -25,7 +31,6 @@ def drawLine(image, lineType, column):
         img_intersection = cv2.line(image, (column, 0), (column, img_height), (0, 255 , 0), thickness = line_thickness)
     
     return img_intersection
-    #showImg("intersection", img_intersection)
 
 def lineIntersection(image, lineType, value):
     (img_height, img_width) = image.shape
@@ -55,7 +60,7 @@ def cal_vertical_LineSegment(image):
                 while (explorer < img_height - 1):
                     if (image[explorer,x] == 0 and image[explorer+1, x] == 1):
                         end_point = [x, explorer]
-                        distance = calDist(start_point, end_point)
+                        distance = dist.euclidean(start_point, end_point)
                         if (distance > max_distance):
                             max_distance = distance
                             mark_start_point = start_point
@@ -70,7 +75,6 @@ def cal_vertical_LineSegment(image):
     
 def cal_horizontal_LineSegment(image):
     (img_height, img_width) = image.shape
-    #img_intersection = image.copy() 
     mark_start_point = mark_end_point = [0, 0]
     max_distance = 0
     y = 0
@@ -78,7 +82,6 @@ def cal_horizontal_LineSegment(image):
         flag_start_counter = False
         x = 0
         while (x < (img_width-1)):
-            #next_x = x + 1 # the (edge point + 1) is out of bounds for the image []; and image[y, next_x] == 1
             if (flag_start_counter == False and image[y,x] == 0 and image[y, x + 1] == 1): 
                 flag_start_counter = True
                 start_point = [x, y]
@@ -87,7 +90,7 @@ def cal_horizontal_LineSegment(image):
                     while (explorer < img_width - 1):
                         if (image[y,explorer] == 0 and image[y, explorer + 1]== 1): #This may cause edge problem
                             end_point = [explorer, y]
-                            distance = calDist(start_point, end_point)
+                            distance = dist.euclidean(start_point, end_point)
                             if (distance > max_distance):
                                 max_distance = distance
                                 mark_start_point = start_point
@@ -161,7 +164,7 @@ def findIntersection(image):
     else:
         print("Total insection points are even")
 
-def findContours(image, cal_operation="horizontal"):
+def findContours(image, cal_operation, ppm):
     #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = image
     # gray = cv2.GaussianBlur(gray, (7,7), 0) #removes high-frequence components 
@@ -204,18 +207,14 @@ def findContours(image, cal_operation="horizontal"):
     image_name = "horizontal_result.jpg" if (cal_operation == "horizontal") else "vertical_result.jpg"
     base_img = cv2.drawContours(mask, cnts, -1 , 0, 1) # -1 to draw all, color and thickness
     img_intersection = cv2.line(base_img, mark_start_point, mark_end_point, 0, 1)
-    print("Max ", cal_operation, " thickness: ", max_distance)
+    # print("PPM: ", ppm)
+    # physical_dist = (max_distance / ppm) * 1000
+    # print("Max ", cal_operation, " thickness: ", physical_dist)
+    print("Calculation: ", cal_operation)
+    print("Start Point: ", mark_start_point) # Mark pixel coordinate for the thickness calculation
+    print("End Point: ", mark_end_point)
     cv2.imwrite(image_name, 255 * img_intersection) 
     showImg(image_name, img_intersection)
-    #shortcut Ctrl+k+c comment; Ctrl+k+u uncomment
-    #showImg("contour", cntImg)
-    #For each contour img to calculate one metric
-    #showPixelValue(cntImg, type="grayscale_image")
-
-    #findIntersection(cntImg)
-    #point_img = lineIntersection(cntImg, "vertical", 400)
-    #drawLines(cntImg)
-    #showImg("Point Img", point_img)
 
 def showPixelValue(image, type = "grayscale_image"):
     if (type =="grayscale_image"):
@@ -253,18 +252,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("-i", "--image", required=False, default="images/sheep_anno.png", help="path to the input image")
     ap.add_argument("-o", "--operation", required=False, default="horizontal", help="cal horizontal or vertical line segment")
+    ap.add_argument("-ppm", "--pixelsPerMetric", type=float, required=False, default="1000", help ="calculate the physical distance")
     args = vars(ap.parse_args())
-    image = cv2.imread(args["image"], cv2.IMREAD_GRAYSCALE) #if the image is grayscale, we only need one channel
-    cal_operation = args["operation"]
-    findContours(image, cal_operation)
-    #gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-    #print(image.shape)
-    #showPixelValue(image, type="grayscale_image")
-    #findContours(image)
-    '''
     image = cv2.imread(args["image"], cv2.IMREAD_GRAYSCALE)
-    #interpo_image = transformImage(image)
-    '''
+    ppm = args["pixelsPerMetric"]
+    findContours(image, args["operation"], ppm)
 
 if __name__ == "__main__":
       main()
