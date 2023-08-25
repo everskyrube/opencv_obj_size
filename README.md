@@ -9,11 +9,12 @@ Additionally, when combined with the depth frame obtained during the inspection,
 
 Just run the following command
 
-'''
+```
 python3 min_rect.py -i crack_seg.jpg
 python3 sliding_window.py -i crack_seg.jpg -o horizontal
 python3 sliding_window.py -i crack_seg.jpg -o vertical
-'''
+
+```
 
 #Add a module for the selection of horizontal / vertical line segment calculation
 #the output of text is in white color, thus, you cannot see the text if the image background is in white color
