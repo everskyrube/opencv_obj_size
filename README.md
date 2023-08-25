@@ -5,7 +5,7 @@ Using the segmented crack image, we can accurately calculate various metrics of 
 These metrics, in the form of pixel coordinates, can then be used to determine the thickness of the crack.
 Additionally, when combined with the depth frame obtained during the inspection, a more comprehensive analysis can be conducted.
  
-![image](https://github.com/everskyrube/opencv_obj_size/blob/main/images/demo.jpg?raw=true)
+![image](demo.jpg)
 
 Just run the following command
 
