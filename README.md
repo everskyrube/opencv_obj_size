@@ -16,11 +16,6 @@ python3 sliding_window.py -i crack_seg.jpg -o vertical
 
 ```
 
-#Add a module for the selection of horizontal / vertical line segment calculation
-#the output of text is in white color, thus, you cannot see the text if the image background is in white color
 
-#The input image format can be jpg
-#For the sliding window algorithm, the input of segmented area should be in black color
-#Therefore, image pre-process is needed, if the interested areas in the raw image are not annotated in black color.
 
 
