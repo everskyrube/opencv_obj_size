@@ -3,7 +3,7 @@
 
 Using the segmented crack image, we can accurately calculate various metrics of the crack using computer vision techniques.
 These metrics, in the form of pixel coordinates, can then be used to determine the thickness of the crack.
-Additionally, when combined with the depth frame obtained during the inspection, a more comprehensive analysis can be conducted.
+Additionally, by combining the depth frame which is obtained during the inspection, a more comprehensive analysis can be conducted.
  
 ![image](demo.jpg)
 
