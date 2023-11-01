@@ -65,15 +65,23 @@ for c in cnts:
     # draw lines between the midpoints
     cv2.line(orig, (int(tltrX), int(tltrY)), (int(blbrX), int(blbrY)), (255, 0, 255), 2)
     cv2.line(orig, (int(tlblX), int(tlblY)), (int(trbrX), int(trbrY)), (255, 0, 255), 2)
-    print("Midpoint between top-left and top-right: (", int(tltrX), "," , int(tltrY), ")")
-    print("Midpoint between bottem-left and bottom-right: (", int(blbrX), "," , int(blbrY), ")")
-    print("Midpoint between top-left and bottom-left: (", int(tlblX), "," , int(tlblY), ")")
-    print("Midpoint between top-right and bottom-right: (", int(trbrX), "," , int(trbrY), ")")
+
+    print("mid_tlbl : (", int(tlblX), "," , int(tlblY), ")")
+    print("mid_trbr : (", int(trbrX), "," , int(trbrY), ")")
+    print("mid_tltr : (", int(tltrX), "," , int(tltrY), ")")
+    print("mid_blbr : (", int(blbrX), "," , int(blbrY), ")")
+    cv2.imshow("Image", orig)
+    cv2.waitKey(0)
+    # print("Midpoint between top-left and top-right: (", int(tltrX), "," , int(tltrY), ")")
+    # print("Midpoint between bottem-left and bottom-right: (", int(blbrX), "," , int(blbrY), ")")
+    # print("Midpoint between top-left and bottom-left: (", int(tlblX), "," , int(tlblY), ")")
+    # print("Midpoint between top-right and bottom-right: (", int(trbrX), "," , int(trbrY), ")")
+
+
     # dA and DB are distance in pixels
     #dA = dist.euclidean((tltrX, tltrY), (blbrX, blbrY)) #compute the Euclidean distance of between the midpoints (height)
     #dB = dist.euclidean((tlblX, tlblY), (trbrX, trbrY)) #compute the Euclidean distance of between the midpoints (width)
 
-cv2.imshow("Image", orig)
-cv2.imwrite("size_estimation_result.jpg", orig)
-cv2.waitKey(0)
+#cv2.imshow("Image", orig)
+cv2.imwrite("min_Rect_result.jpg", orig)
 cv2.destroyAllWindows()
